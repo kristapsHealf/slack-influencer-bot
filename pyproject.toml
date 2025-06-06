@@ -2,6 +2,7 @@
 name = "influencer-bot"
 version = "0.1.0"
 description = ""
+authors = ["ristaps Kallaste <kristaps@healf.com>"]
 readme = "README.md"
 
 # Tells Poetry where to find your package source
