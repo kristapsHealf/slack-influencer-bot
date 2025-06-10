@@ -3,7 +3,6 @@
 #### Stage 1: install dependencies ####
 FROM python:3.11-slim AS builder
 
-# Install system deps needed by Poetry and your packages
 RUN apt-get update && \
     apt-get install -y \
     curl \
@@ -17,31 +16,26 @@ ENV PATH="/root/.local/bin:$PATH"
 
 WORKDIR /app
 
-# Copy lockfiles and install only runtime deps
+# Copy lockfiles and install dependencies
 COPY pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.create false \
- && poetry install --no-dev --no-interaction --no-ansi
+ && poetry install --without dev --no-root --no-interaction --no-ansi
 
 #### Stage 2: build final image ####
 FROM python:3.11-slim
 
-# Install runtime system dependencies
 RUN apt-get update && \
     apt-get install -y \
     libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Poetry (and system deps) from builder
-COPY --from=builder /root/.local /root/.local
-ENV PATH="/root/.local/bin:$PATH"
-
 WORKDIR /app
+
+# Copy installed packages from builder stage
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy source code
 COPY src/ ./src/
 
-# Expose a port if you add a health check HTTP server (optional)
-# EXPOSE 8080
-
-# Launch the bot in Socket Mode
-CMD ["poetry", "run", "python", "src/bot.py"]
+CMD ["python", "src/bot.py"]
